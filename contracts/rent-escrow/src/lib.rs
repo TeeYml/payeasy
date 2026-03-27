@@ -5,6 +5,11 @@ use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]
 pub enum Error {
+    /// Contract has already been initialized
+    AlreadyInitialized = 1,
+    /// Contract has not been initialized yet
+    NotInitialized = 2,
+}
     /// Caller is not authorized to perform this action
     Unauthorized = 1,
     /// The escrow deadline has passed
