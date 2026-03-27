@@ -128,4 +128,5 @@ impl RentEscrowContract {
     }
 }
 
+#[cfg(test)]
 mod test;
