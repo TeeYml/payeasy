@@ -43,4 +43,5 @@ yarn-error.log*
 Thumbs.db
 
 #scripts
-scripts/
+scripts/*
+!scripts/mint-test-tokens.sh
