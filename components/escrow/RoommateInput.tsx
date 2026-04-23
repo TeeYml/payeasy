@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
-
-import { isValidStellarAddress } from "@/lib/stellar/validation";
+import { useMemo } from "react";
 import type { RoommateInputValue } from "./createEscrowForm.helpers";
 
 type AddressValidation = "idle" | "valid" | "invalid";
@@ -13,6 +10,7 @@ const VALIDATION_DEBOUNCE_MS = 300;
 interface RoommateInputProps {
   roommate: RoommateInputValue;
   index: number;
+  totalRent: string;
   onChange: (
     roommateId: string,
     field: "address" | "shareAmount",
@@ -25,46 +23,17 @@ interface RoommateInputProps {
 export default function RoommateInput({
   roommate,
   index,
+  totalRent,
   onChange,
   onRemove,
   disableRemove,
 }: RoommateInputProps) {
-  const [addressValidation, setAddressValidation] = useState<AddressValidation>(
-    () =>
-      roommate.address
-        ? isValidStellarAddress(roommate.address)
-          ? "valid"
-          : "invalid"
-        : "idle"
-  );
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  function runValidation(value: string): void {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      setAddressValidation("idle");
-      return;
-    }
-    setAddressValidation(isValidStellarAddress(trimmed) ? "valid" : "invalid");
-  }
-
-  function handleAddressBlur(event: React.FocusEvent<HTMLInputElement>): void {
-    const value = event.target.value;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      runValidation(value);
-    }, VALIDATION_DEBOUNCE_MS);
-  }
-
-  const errorId = `roommate-address-${roommate.id}-error`;
-  const isInvalid = addressValidation === "invalid";
-  const isValid = addressValidation === "valid";
+  const percentage = useMemo(() => {
+    const total = parseFloat(totalRent);
+    const share = parseFloat(roommate.shareAmount);
+    if (isNaN(total) || isNaN(share) || total === 0) return null;
+    return ((share / total) * 100).toFixed(1);
+  }, [totalRent, roommate.shareAmount]);
 
   return (
     <div className="glass-card p-4 space-y-3">
@@ -123,9 +92,16 @@ export default function RoommateInput({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs uppercase tracking-wide text-dark-500" htmlFor={`roommate-share-${roommate.id}`}>
-          Share Amount
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-xs uppercase tracking-wide text-dark-500" htmlFor={`roommate-share-${roommate.id}`}>
+            Share Amount
+          </label>
+          {percentage !== null && (
+            <span className="text-xs font-medium text-brand-300">
+              ({percentage}%)
+            </span>
+          )}
+        </div>
         <input
           id={`roommate-share-${roommate.id}`}
           type="number"
