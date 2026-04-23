@@ -1,100 +1,102 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
 
-const mockLoadAccount = vi.fn();
+let loadAccountBehavior: () => Promise<unknown> = async () => ({ balances: [] });
 
-vi.mock("@stellar/stellar-sdk", () => ({
-  Horizon: {
-    Server: class MockServer {
-      constructor() {
-        // no-op
-      }
-      loadAccount = mockLoadAccount;
+const mockLoadAccount = mock.fn(async () => loadAccountBehavior());
+
+mock.module("@stellar/stellar-sdk", {
+  namedExports: {
+    Horizon: {
+      Server: class MockHorizonServer {
+        constructor(_url: string) {}
+        loadAccount = mockLoadAccount;
+      },
     },
   },
-}));
+});
 
-import { fetchAccountBalances, fetchXlmBalance } from "../lib/stellar/horizon";
+const { fetchAccountBalances, fetchXlmBalance } = await import(
+  "../lib/stellar/horizon.ts"
+);
 
-describe("fetchAccountBalances", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+test("fetchAccountBalances returns parsed XLM and token balances", async () => {
+  loadAccountBehavior = async () => ({
+    balances: [
+      { balance: "100.0000000", asset_type: "native" },
+      {
+        balance: "50.0000000",
+        asset_type: "credit_alphanum4",
+        asset_code: "USDC",
+        asset_issuer:
+          "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+      },
+    ],
   });
 
-  it("returns parsed XLM and token balances", async () => {
-    mockLoadAccount.mockResolvedValue({
-      balances: [
-        {
-          balance: "100.0000000",
-          asset_type: "native",
-        },
-        {
-          balance: "50.0000000",
-          asset_type: "credit_alphanum4",
-          asset_code: "USDC",
-          asset_issuer:
-            "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
-        },
-      ],
-    });
+  const result = await fetchAccountBalances("GABC123", "testnet");
 
-    const result = await fetchAccountBalances("GABC123", "testnet");
+  assert.strictEqual(result.accountId, "GABC123");
+  assert.strictEqual(result.balances.length, 2);
 
-    expect(result.accountId).toBe("GABC123");
-    expect(result.balances).toHaveLength(2);
-
-    expect(result.balances[0]).toEqual({
-      assetType: "native",
-      assetCode: "XLM",
-      assetIssuer: null,
-      balance: "100.0000000",
-    });
-
-    expect(result.balances[1]).toEqual({
-      assetType: "credit_alphanum4",
-      assetCode: "USDC",
-      assetIssuer:
-        "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
-      balance: "50.0000000",
-    });
+  assert.deepStrictEqual(result.balances[0], {
+    assetType: "native",
+    assetCode: "XLM",
+    assetIssuer: null,
+    balance: "100.0000000",
   });
 
-  it("throws on account not found (404)", async () => {
-    const error = new Error("Not Found");
-    Object.assign(error, { response: { status: 404 } });
-    mockLoadAccount.mockRejectedValue(error);
-
-    await expect(
-      fetchAccountBalances("GNOTFOUND", "testnet")
-    ).rejects.toThrow("Account not found: GNOTFOUND");
-  });
-
-  it("throws on network failure", async () => {
-    mockLoadAccount.mockRejectedValue(new Error("Network error"));
-
-    await expect(
-      fetchAccountBalances("GABC123", "testnet")
-    ).rejects.toThrow("Failed to fetch balances: Network error");
+  assert.deepStrictEqual(result.balances[1], {
+    assetType: "credit_alphanum4",
+    assetCode: "USDC",
+    assetIssuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    balance: "50.0000000",
   });
 });
 
-describe("fetchXlmBalance", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+test("fetchAccountBalances throws on account not found (404)", async () => {
+  const notFound = Object.assign(new Error("Not Found"), {
+    response: { status: 404 },
+  });
+  loadAccountBehavior = async () => {
+    throw notFound;
+  };
+
+  await assert.rejects(
+    () => fetchAccountBalances("GNOTFOUND", "testnet"),
+    (err: Error) => {
+      assert.match(err.message, /Account not found: GNOTFOUND/);
+      return true;
+    }
+  );
+});
+
+test("fetchAccountBalances throws on network failure", async () => {
+  loadAccountBehavior = async () => {
+    throw new Error("Network error");
+  };
+
+  await assert.rejects(
+    () => fetchAccountBalances("GABC123", "testnet"),
+    (err: Error) => {
+      assert.match(err.message, /Failed to fetch balances: Network error/);
+      return true;
+    }
+  );
+});
+
+test("fetchXlmBalance returns the native XLM balance", async () => {
+  loadAccountBehavior = async () => ({
+    balances: [{ balance: "250.5000000", asset_type: "native" }],
   });
 
-  it("returns the native XLM balance", async () => {
-    mockLoadAccount.mockResolvedValue({
-      balances: [{ balance: "250.5000000", asset_type: "native" }],
-    });
+  const balance = await fetchXlmBalance("GABC123", "testnet");
+  assert.strictEqual(balance, "250.5000000");
+});
 
-    const balance = await fetchXlmBalance("GABC123", "testnet");
-    expect(balance).toBe("250.5000000");
-  });
+test("fetchXlmBalance returns '0' if no native balance found", async () => {
+  loadAccountBehavior = async () => ({ balances: [] });
 
-  it("returns '0' if no native balance found", async () => {
-    mockLoadAccount.mockResolvedValue({ balances: [] });
-
-    const balance = await fetchXlmBalance("GABC123", "testnet");
-    expect(balance).toBe("0");
-  });
+  const balance = await fetchXlmBalance("GABC123", "testnet");
+  assert.strictEqual(balance, "0");
 });
