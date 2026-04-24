@@ -4,6 +4,10 @@ import { useMemo } from "react";
 import type { RoommateInputValue } from "./createEscrowForm.helpers";
 import { FieldError, fieldBorderClass } from "@/components/ui/field-error";
 
+type AddressValidation = "idle" | "valid" | "invalid";
+
+const VALIDATION_DEBOUNCE_MS = 300;
+
 interface RoommateInputProps {
   roommate: RoommateInputValue;
   index: number;
