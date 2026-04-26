@@ -378,6 +378,8 @@ export function PayEasyHero({
                   src={program.image}
                   alt={program.title}
                   fill
+                  priority={index === 0}
+                  sizes="(max-width: 640px) 80vw, 320px"
                   className="w-full h-full object-cover"
                 />
                 <div

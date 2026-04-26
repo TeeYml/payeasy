@@ -6,9 +6,8 @@ export default function NotFound() {
     <main aria-label="Page Not Found" className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
       {/* Floating "404" */}
       <div
-        className="animate-float select-none mb-8"
+        className="animate-float select-none mb-8 font-display"
         aria-hidden="true"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
       >
         <span
           className="text-[10rem] font-bold leading-none gradient-text"
@@ -19,8 +18,7 @@ export default function NotFound() {
       </div>
 
       <h1
-        className="text-2xl font-bold text-white mb-3"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        className="text-2xl font-bold text-white mb-3 font-display"
       >
         Page not found
       </h1>
