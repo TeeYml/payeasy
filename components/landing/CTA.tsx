@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function CTA() {
   return (
@@ -28,8 +29,8 @@ export default function CTA() {
               built for roommates everywhere.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
-                href="#"
+              <Link
+                href="/connect"
                 className="btn-primary !py-4 !px-10 !text-lg !rounded-xl group"
               >
                 Get Started
@@ -37,7 +38,7 @@ export default function CTA() {
                   size={18}
                   className="transition-transform group-hover:translate-x-1"
                 />
-              </a>
+              </Link>
               <a
                 href="https://github.com/Ogstevyn/payeasy"
                 target="_blank"

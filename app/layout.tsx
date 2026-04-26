@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import "@/lib/env";
+import { AppShell } from "@/components/ui/app-shell";
+import { StellarAuthProvider } from "@/contexts/StellarAuthContext";
 import "./globals.css";
+import AppShell from "@/components/ui/app-shell";
 
 export const metadata: Metadata = {
   title: "PayEasy — Blockchain-Powered Rent Sharing for Roommates",
@@ -28,10 +32,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <div className="mesh-gradient" aria-hidden="true" />
-        <div className="relative z-10">{children}</div>
+        <AppShell>
+          <div className="relative z-10">{children}</div>
+        </AppShell>
+        <StellarAuthProvider>
+          <AppShell>{children}</AppShell>
+        </StellarAuthProvider>
       </body>
     </html>
   );
