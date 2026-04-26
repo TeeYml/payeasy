@@ -39,6 +39,8 @@ function inferTransactionType(operations: ParsedOperation[]): TransactionType {
 }
 
 function mapParsedTransaction(tx: ParsedTransaction): Transaction {
+  const contractId = tx.operations.find(op => op.contractId)?.contractId;
+  
   return {
     id: tx.id || tx.hash,
     type: inferTransactionType(tx.operations),
@@ -46,6 +48,7 @@ function mapParsedTransaction(tx: ParsedTransaction): Transaction {
     status: tx.successful ? "success" : "failed",
     timestamp: tx.timestamp,
     txHash: tx.hash,
+    contractId,
   };
 }
 

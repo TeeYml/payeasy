@@ -28,6 +28,7 @@ import useContractPolling from "@/hooks/useContractPolling";
 import { buildReleaseXdr, signAndSubmitRelease } from "@/lib/stellar/actions/release";
 import { useToast } from "@/hooks/useToast";
 import CopyButton from "@/components/ui/copy-button";
+import { DeadlineCountdown } from "@/components/escrow/DeadlineCountdown";
 
 interface Props {
   contractId: string;
@@ -214,7 +215,10 @@ export default function EscrowDashboardClient({ contractId }: Props) {
               <span className="text-white font-black italic">Stellar Ledger</span>.
             </p>
             <div className="h-16 w-px bg-gradient-to-b from-white/10 via-white/5 to-transparent hidden md:block" />
-            <RefreshIndicator onRefresh={refresh} />
+            <div className="flex flex-wrap items-center gap-6">
+              <DeadlineCountdown deadlineEpoch={contractState?.deadlineEpoch || 0} />
+              <RefreshIndicator onRefresh={refresh} />
+            </div>
           </div>
         </header>
 

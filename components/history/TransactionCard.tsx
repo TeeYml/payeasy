@@ -10,8 +10,10 @@ import {
   Hash, 
   CheckCircle2, 
   Clock, 
-  AlertCircle 
+  AlertCircle,
+  RotateCcw
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { getExplorerLink } from "@/lib/stellar/explorer";
 
 export type TransactionType = "contribute" | "release" | "refund";
@@ -24,6 +26,7 @@ export interface Transaction {
   status: TransactionStatus;
   timestamp: string;
   txHash: string;
+  contractId?: string;
 }
 
 interface TransactionCardProps {
@@ -39,6 +42,8 @@ interface TransactionCardProps {
  * Features specialized icons and color schemes based on the transaction type.
  */
 export default function TransactionCard({ transaction, isNew = false }: TransactionCardProps) {
+  const router = useRouter();
+
   const explorerLink = useMemo(() => {
     try {
       return getExplorerLink("transaction", transaction.txHash);
@@ -129,15 +134,36 @@ export default function TransactionCard({ transaction, isNew = false }: Transact
           </div>
         </div>
 
-        <a
-          href={explorerLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-3 rounded-xl bg-white/5 border border-white/5 text-dark-400 transition-all hover:bg-white/10 hover:text-brand-300 hover:border-brand-500/40 group/link"
-          aria-label="View on Stellar Explorer"
-        >
-          <ExternalLink className="h-5 w-5 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
-        </a>
+        <div className="flex items-center gap-2">
+          {transaction.status === "failed" && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (transaction.contractId) {
+                  router.push(`/escrow/${transaction.contractId}`);
+                } else {
+                  // Fallback to create if no contract ID is found
+                  router.push("/escrow/create");
+                }
+              }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Retry
+            </button>
+          )}
+
+          <a
+            href={explorerLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-3 rounded-xl bg-white/5 border border-white/5 text-dark-400 transition-all hover:bg-white/10 hover:text-brand-300 hover:border-brand-500/40 group/link"
+            aria-label="View on Stellar Explorer"
+          >
+            <ExternalLink className="h-5 w-5 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
+          </a>
+        </div>
       </div>
       
       {/* Mobile view for extra details */}

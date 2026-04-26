@@ -42,6 +42,7 @@ export interface HorizonOperationRecord {
   // invoke_host_function (Soroban)
   function?: string;
   parameters?: unknown[];
+  contract_id?: string;
 }
 
 export interface HorizonOperationPage {
@@ -87,6 +88,7 @@ export interface ParsedOperation {
   counterparty?: string;
   /** Contract function name for Soroban invoke_host_function operations. */
   function?: string;
+  contractId?: string;
 }
 
 export interface ParsedTransaction {
@@ -333,7 +335,11 @@ export function parseOperation(
     }
 
     case "invoke_host_function": {
-      return { ...base, function: raw.function };
+      return { 
+        ...base, 
+        function: raw.function,
+        contractId: raw.contract_id 
+      };
     }
 
     default:
