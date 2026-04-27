@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "@/lib/env";
 import { AppShell } from "@/components/ui/app-shell";
-import { StellarAuthProvider } from "@/contexts/StellarAuthContext";
+import { StellarProvider } from "@/context/StellarContext";
 import "./globals.css";
 
 const inter = Inter({
@@ -55,9 +55,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} font-sans`}
       >
-        <StellarAuthProvider>
+        <StellarProvider>
           <AppShell>{children}</AppShell>
-        </StellarAuthProvider>
+        </StellarProvider>
       </body>
     </html>
   );

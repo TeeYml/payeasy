@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Coins, AlertTriangle } from "lucide-react";
+import { Wallet, LogOut, Copy, Check, ChevronDown, ExternalLink, AlertCircle, Coins, AlertTriangle, Maximize2, Minimize2 } from "lucide-react";
 import { useStellarAuth } from "@/context/StellarContext";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -38,8 +38,16 @@ export default function ConnectWalletButton() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showFullAddress, setShowFullAddress] = useState(false);
   const isMobile = useIsMobile();
   const appNetwork = getCurrentNetwork();
+
+  // Auto-collapse full address when dropdown closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowFullAddress(false);
+    }
+  }, [isOpen]);
 
   const hasNetworkMismatch = isWalletNetworkMismatch(walletNetwork, appNetwork);
   const mismatchMessage = hasNetworkMismatch
@@ -246,11 +254,20 @@ export default function ConnectWalletButton() {
             animate={{ opacity: 1, y: 5, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute right-0 top-full z-50 w-48 mt-2 glass rounded-xl border border-white/10 shadow-2xl overflow-hidden"
+            className="absolute right-0 top-full z-50 w-64 mt-2 glass rounded-xl border border-white/10 shadow-2xl overflow-hidden"
           >
             {/* Balance display */}
             <div className="px-3 py-2 border-b border-white/5 mb-1">
-              <p className="text-[10px] text-dark-500 uppercase tracking-widest font-semibold mb-0.5">Balance</p>
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] text-dark-500 uppercase tracking-widest font-semibold">Balance</p>
+                <button 
+                  onClick={() => setShowFullAddress(!showFullAddress)}
+                  className="p-1 rounded-md bg-white/5 hover:bg-brand-500/20 text-brand-400 transition-all"
+                  title={showFullAddress ? "Show Truncated" : "Show Full Address"}
+                >
+                  {showFullAddress ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                </button>
+              </div>
               {isBalanceLoading ? (
                 <div className="h-4 w-20 bg-dark-800/60 rounded animate-pulse" />
               ) : (
@@ -259,6 +276,12 @@ export default function ConnectWalletButton() {
                   {balance ?? "—"} XLM
                 </p>
               )}
+            </div>
+
+            <div className="px-3 py-2 bg-dark-950/30 rounded-lg mx-1 mb-2 border border-white/5">
+              <p className={`text-[11px] font-mono break-all leading-relaxed ${showFullAddress ? "text-dark-100" : "text-dark-400"}`}>
+                {showFullAddress ? publicKey : truncatedKey}
+              </p>
             </div>
 
             <div className="p-1">
