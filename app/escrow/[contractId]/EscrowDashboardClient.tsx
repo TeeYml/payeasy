@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import EscrowStatus from "@/components/escrow/EscrowStatus";
 import FundingProgress from "@/components/escrow/FundingProgress";
 import MultiSigApproval from "@/components/escrow/MultiSigApproval";
@@ -61,6 +61,33 @@ export default function EscrowDashboardClient({ contractId }: Props) {
   const currentRoommate = contractState?.roommates.find(
     (r) => r.address === publicKey
   );
+
+  // #550 — memoize derived values so they don't recompute on unrelated state changes.
+  const totalFunded = useMemo(
+    () =>
+      contractState
+        ? contractState.roommates.reduce(
+            (sum, r) => sum + Number(r.paidAmount),
+            0
+          )
+        : 0,
+    [contractState]
+  );
+
+  const fundingPercentage = useMemo(() => {
+    if (!contractState || Number(contractState.totalRent) === 0) return 0;
+    return Math.min(
+      100,
+      (totalFunded / Number(contractState.totalRent)) * 100
+    );
+  }, [contractState, totalFunded]);
+
+  const roommateStatusMap = useMemo(() => {
+    if (!contractState) return new Map<string, boolean>();
+    return new Map(
+      contractState.roommates.map((r) => [r.address, r.isPaid])
+    );
+  }, [contractState]);
 
   const nowEpoch = Math.floor(Date.now() / 1000);
   const isDeadlinePassed =
